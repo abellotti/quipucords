@@ -6,7 +6,7 @@ ENV DJANGO_LOG_FILE=/var/log/app.log
 ENV DJANGO_LOG_FORMATTER=verbose
 ENV DJANGO_LOG_HANDLERS=console,file
 ENV DJANGO_LOG_LEVEL=INFO
-ENV DJANGO_SECRET_PATH=/var/data/secret.txt
+ENV DJANGO_SECRET_PATH=/app/quipucords/secret.txt
 ENV LANG=C
 ENV LC_ALL=C
 ENV PATH="/opt/venv/bin:${PATH}"
@@ -36,6 +36,7 @@ RUN pip install --upgrade pip wheel
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+RUN pip install debugpy
 RUN dnf remove ${BUILD_PACKAGES} -y && \
     dnf clean all
 

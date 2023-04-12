@@ -1,0 +1,189 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  template: discovery
+metadata:
+  name: discovery
+  namespace: discovery
+  annotations:
+    description: The Discovery Server application
+    tags: quipucords,discovery
+objects:
+- apiVersion: v1
+  kind: ServiceAccount
+  imagePullSecrets:
+  - name: discovery-pull-secret
+  metadata:
+    name: discovery-sa
+    namespace: discovery
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    name: discovery-quipucords
+    namespace: discovery
+  spec:
+    replicas: 1
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          deploymentconfig: quipucords
+      spec:
+        containers:
+          - name: discovery-quipucords
+            image: quay.io/abellott/quipucords:latest
+            imagePullPolicy: Always
+            serviceAccount: discovery-sa
+            serviceAccountName: discovery-sa
+            ports:
+              - containerPort: 443
+                protocol: TCP
+              - containerPort: 5678
+                protocol: TCP
+            command: [ "/bin/sh", "-c", "/deploy/server_run.sh" ]
+            env:
+              - name: ANSIBLE_LOG_LEVEL
+                value: "3"
+              - name: QPC_DBMS
+                value: "postgres"
+              - name: QPC_DBMS_DATABASE
+                value: "qpc"
+              - name: QPC_DBMS_HOST
+                value: "discovery-db"
+              - name: QPC_DBMS_PASSWORD
+                value: "qpc"
+              - name: QPC_DBMS_PORT
+                value: "5432"
+              - name: QPC_DBMS_USER
+                value: "qpc"
+              - name: QPC_SERVER_TIMEOUT
+                value: "5"
+              - name: NETWORK_CONNECT_JOB_TIMEOUT
+                value: "6"
+              - name: NETWORK_INSPECT_JOB_TIMEOUT
+                value: "600"
+              - name: QPC_DEBUGPY
+                value: "1"
+              - name: QPC_LOG_ALL_ENV_VARS_AT_STARTUP
+                value: "False"
+              - name: REDIS_HOST
+                value: "discovery-redis"
+              - name: REDIS_PASSWORD
+                value: "qpc"
+        imagePullSecrets:
+        - name: discovery-pull-secret
+        restartPolicy: Always
+    triggers:
+    - type: ConfigChange
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    name: discovery-celery-worker
+    namespace: discovery
+  spec:
+    replicas: "${{DISCOVERY_CELERY_WORKER_MINIMUM_REPLICA_COUNT}}"
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          deploymentconfig: discovery-celery-worker
+      spec:
+        containers:
+          - name: discovery-celery-worker
+            image: quay.io/abellott/quipucords:latest
+            imagePullPolicy: Always
+            serviceAccount: discovery-sa
+            serviceAccountName: discovery-sa
+            command: [ "/bin/sh", "-c", "/deploy/entrypoint_celery_worker.sh" ]
+            env:
+              - name: REDIS_HOST
+                value: "discovery-redis"
+              - name: REDIS_PASSWORD
+                value: "qpc"
+        imagePullSecrets:
+        - name: discovery-pull-secret
+        restartPolicy: Always
+    triggers:
+    - type: ConfigChange
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    name: discovery-db
+    namespace: discovery
+  spec:
+    replicas: 1
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          deploymentconfig: discovery-db
+      spec:
+        containers:
+          - name: discovery-db
+            image: registry.redhat.io/rhel8/postgresql-12
+            imagePullPolicy: Always
+            serviceAccount: discovery-sa
+            serviceAccountName: discovery-sa
+            ports:
+              - containerPort: 5432
+                protocol: TCP
+            readinessProbe:
+              exec:
+                command:
+                - /bin/pg_is_ready -U postgres
+              failureThreshold: 3
+              initialDelaySeconds: 30
+              periodSeconds: 10
+              successThreshold: 1
+              timeoutSeconds: 45
+            env:
+              - name: POSTGRESQL_USER
+                value: "qpc"
+              - name: POSTGRESQL_PASSWORD
+                value: "qpc"
+              - name: POSTGRESQL_DATABASE
+                value: "qpc"
+        imagePullSecrets:
+        - name: discovery-pull-secret
+        restartPolicy: Always
+    triggers:
+    - type: ConfigChange
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    name: discovery-redis
+    namespace: discovery
+  spec:
+    replicas: 1
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          deploymentconfig: quipucords
+      spec:
+        containers:
+          - name: discovery-redis
+            image: registry.redhat.io/rhel9/redis-6
+            imagePullPolicy: Always
+            serviceAccount: discovery-sa
+            serviceAccountName: discovery-sa
+            ports:
+              - containerPort: 6379
+                protocol: TCP
+            env:
+              - name: REDIS_PASSWORD
+                value: "qpc"
+        imagePullSecrets:
+        - name: discovery-pull-secret
+        restartPolicy: Always
+    triggers:
+    - type: ConfigChange
+parameters:
+- name: DISCOVERY_CELERY_WORKER_MINIMUM_REPLICA_COUNT
+  displayName: Discovery Celery Worker Minimum Replica Count
+  description: This is the starting number of Celery workers replicas requested.
+  value: '2'
