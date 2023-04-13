@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftWebConsole
+  creationTimestamp: "2023-04-13T08:25:25Z"
+  labels:
+    app: qpc-db
+    app.kubernetes.io/component: qpc-db
+    app.kubernetes.io/instance: qpc-db
+    app.kubernetes.io/name: qpc-db
+    app.kubernetes.io/part-of: qpc-db
+    app.openshift.io/runtime-version: latest
+  name: qpc-db
+  namespace: discovery
+  resourceVersion: "673454"
+  uid: 550c6837-034c-4521-9404-8de38a2410d5
+spec:
+  clusterIP: 10.217.5.140
+  clusterIPs:
+  - 10.217.5.140
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: 5432-tcp
+    port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    app: qpc-db
+    deployment: qpc-db
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}

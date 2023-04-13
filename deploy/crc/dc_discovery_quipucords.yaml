@@ -1,0 +1,137 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  annotations:
+    app: discovery
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: "2023-04-13T03:28:40Z"
+  generation: 18
+  labels:
+    app: discovery
+    app.kubernetes.io/component: discovery
+    app.kubernetes.io/instance: discovery
+    template: discovery
+  name: discovery-quipucords
+  namespace: discovery
+  resourceVersion: "798401"
+  uid: a18eb88a-1aa8-4b42-9067-52208d7642cf
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    app: discovery-quipucords
+    deploymentconfig: quipucords
+  strategy:
+    activeDeadlineSeconds: 21600
+    recreateParams:
+      timeoutSeconds: 600
+    resources: {}
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftNewApp
+      creationTimestamp: null
+      labels:
+        app: discovery-quipucords
+        deploymentconfig: quipucords
+    spec:
+      containers:
+      - command:
+        - /bin/bash
+        - -c
+        - make server-migrate server-set-superuser -C /app && gunicorn quipucords.wsgi
+          -c /deploy/gunicorn.conf.py -b '0.0.0.0:8000'
+        env:
+        - name: ANSIBLE_LOG_LEVEL
+          value: "3"
+        - name: QPC_DBMS
+          value: postgres
+        - name: QPC_DBMS_DATABASE
+          value: qpc
+        - name: QPC_DBMS_HOST
+          value: 10.217.5.140
+        - name: QPC_DBMS_PASSWORD
+          value: qpc
+        - name: QPC_DBMS_PORT
+          value: "5432"
+        - name: QPC_DBMS_USER
+          value: qpc
+        - name: QPC_SERVER_TIMEOUT
+          value: "5"
+        - name: NETWORK_CONNECT_JOB_TIMEOUT
+          value: "6"
+        - name: NETWORK_INSPECT_JOB_TIMEOUT
+          value: "600"
+        - name: QPC_DEBUGPY
+          value: "1"
+        - name: QPC_LOG_ALL_ENV_VARS_AT_STARTUP
+          value: "False"
+        - name: REDIS_HOST
+          value: 10.217.0.31
+        - name: REDIS_PASSWORD
+          value: qpc
+        image: quay.io/abellott/quipucords:latest
+        imagePullPolicy: Always
+        name: discovery-quipucords
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+        - containerPort: 5678
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/data
+          name: quipucords-db-claim
+        - mountPath: /var/log
+          name: discovery-log-volume-claim
+        - mountPath: /.ansible
+          name: discovery-ansible-tmp
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: discovery-pull-secret
+      - name: discovery-pull-secret
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: quipucords-db-claim
+        persistentVolumeClaim:
+          claimName: quipucords-db-claim
+      - name: discovery-log-volume-claim
+        persistentVolumeClaim:
+          claimName: discovery-log-volume-claim
+      - name: discovery-ansible-tmp
+        persistentVolumeClaim:
+          claimName: discovery-ansible-tmp
+  test: false
+  triggers:
+  - type: ConfigChange
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2023-04-13T17:12:50Z"
+    lastUpdateTime: "2023-04-13T17:13:04Z"
+    message: replication controller "discovery-quipucords-16" successfully rolled
+      out
+    reason: NewReplicationControllerAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2023-04-13T19:05:33Z"
+    lastUpdateTime: "2023-04-13T19:05:33Z"
+    message: Deployment config has minimum availability.
+    status: "True"
+    type: Available
+  details:
+    causes:
+    - type: Manual
+    message: manual change
+  latestVersion: 16
+  observedGeneration: 18
+  readyReplicas: 1
+  replicas: 1
+  unavailableReplicas: 0
+  updatedReplicas: 1

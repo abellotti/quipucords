@@ -1,0 +1,5 @@
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                                                 STORAGECLASS                   REASON   AGE
+pvc-1ff1e569-dbb1-4aba-977d-8bd1a3b6e4e7   30Gi       RWX            Delete           Bound    discovery/discovery-ansible-tmp                       crc-csi-hostpath-provisioner            13h
+pvc-3e1dbe34-c602-48c5-ab13-d2fbe2548f7e   30Gi       RWX            Delete           Bound    openshift-image-registry/crc-image-registry-storage   crc-csi-hostpath-provisioner            15d
+pvc-4bbc3660-c5c1-4bb5-9faf-307dc6f155ff   30Gi       RWX            Delete           Bound    discovery/discovery-log-volume-claim                  crc-csi-hostpath-provisioner            13h
+pvc-b608c82f-6041-40d0-b5c1-12a75a305a78   30Gi       RWX            Delete           Bound    discovery/quipucords-db-claim                         crc-csi-hostpath-provisioner            13h

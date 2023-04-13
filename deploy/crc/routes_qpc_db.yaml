@@ -1,0 +1,39 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    openshift.io/host.generated: "true"
+  creationTimestamp: "2023-04-13T08:25:25Z"
+  labels:
+    app: qpc-db
+    app.kubernetes.io/component: qpc-db
+    app.kubernetes.io/instance: qpc-db
+    app.kubernetes.io/name: qpc-db
+    app.kubernetes.io/part-of: qpc-db
+    app.openshift.io/runtime-version: latest
+  name: qpc-db
+  namespace: discovery
+  resourceVersion: "673459"
+  uid: abe11531-f752-457c-80e2-69d214ef22b9
+spec:
+  host: qpc-db-discovery.apps-crc.testing
+  port:
+    targetPort: 5432-tcp
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: qpc-db
+    weight: 100
+  wildcardPolicy: None
+status:
+  ingress:
+  - conditions:
+    - lastTransitionTime: "2023-04-13T08:25:26Z"
+      status: "True"
+      type: Admitted
+    host: qpc-db-discovery.apps-crc.testing
+    routerCanonicalHostname: router-default.apps-crc.testing
+    routerName: default
+    wildcardPolicy: None

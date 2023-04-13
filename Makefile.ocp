@@ -43,10 +43,23 @@ deploy:
 
 undeploy:
 	oc project $(QPC_NAMESPACE)
-	oc delete --ignore-not-found=true dc/discovery-celery-worker
-	oc delete --ignore-not-found=true dc/discovery-quipucords
-	oc delete --ignore-not-found=true dc/discovery-db
-	oc delete --ignore-not-found=true dc/discovery-redis
+# Deployments
+	oc delete --ignore-not-found=true deployment/discovery-celery-worker
+	oc delete --ignore-not-found=true deployment/discovery-quipucords
+	oc delete --ignore-not-found=true deployment/discovery-db
+	oc delete --ignore-not-found=true deployment/discovery-redis
+# Services
+	oc delete --ignore-not-found=true services/discovery-server
+	oc delete --ignore-not-found=true services/discovery-db
+	oc delete --ignore-not-found=true services/discovery-redis
+# Routes
+	oc delete --ignore-not-found=true routes/discovery-server
+	oc delete --ignore-not-found=true routes/discovery-db
+	oc delete --ignore-not-found=true routes/discovery-redis
+# Physical Volume Claims
+	oc delete --ignore-not-found=true pvc/discovery-data-volume-claim
+	oc delete --ignore-not-found=true pvc/discovery-log-volume-claim
+# Service Accounts
 	oc delete --ignore-not-found=true sa/discovery-sa
 	oc delete --ignore-not-found=true -f deploy/discovery_template.yaml
 

@@ -1,0 +1,98 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: "2023-04-13T03:28:40Z"
+  generation: 5
+  labels:
+    app: discovery
+    app.kubernetes.io/component: discovery
+    app.kubernetes.io/instance: discovery
+    template: discovery
+  name: discovery-celery-worker
+  namespace: discovery
+  resourceVersion: "797572"
+  uid: 628d3c14-6964-4dbf-b021-9d86e6277d12
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    deploymentconfig: discovery-celery-worker
+  strategy:
+    activeDeadlineSeconds: 21600
+    recreateParams:
+      timeoutSeconds: 600
+    resources: {}
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftNewApp
+      creationTimestamp: null
+      labels:
+        deploymentconfig: discovery-celery-worker
+    spec:
+      containers:
+      - command:
+        - /bin/sh
+        - -c
+        - /deploy/entrypoint_celery_worker.sh
+        env:
+        - name: REDIS_HOST
+          value: 10.217.0.31
+        - name: REDIS_PASSWORD
+          value: qpc
+        image: quay.io/abellott/quipucords:latest
+        imagePullPolicy: Always
+        name: discovery-celery-worker
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/log
+          name: discovery-log-volume-claim
+        - mountPath: /.ansible
+          name: discovery-ansible-tmp
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: discovery-pull-secret
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: discovery-log-volume-claim
+        persistentVolumeClaim:
+          claimName: discovery-log-volume-claim
+      - name: discovery-ansible-tmp
+        persistentVolumeClaim:
+          claimName: discovery-ansible-tmp
+  test: false
+  triggers:
+  - type: ConfigChange
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2023-04-13T16:36:58Z"
+    lastUpdateTime: "2023-04-13T16:37:04Z"
+    message: replication controller "discovery-celery-worker-4" successfully rolled
+      out
+    reason: NewReplicationControllerAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2023-04-13T19:02:19Z"
+    lastUpdateTime: "2023-04-13T19:02:19Z"
+    message: Deployment config has minimum availability.
+    status: "True"
+    type: Available
+  details:
+    causes:
+    - type: ConfigChange
+    message: config change
+  latestVersion: 4
+  observedGeneration: 5
+  readyReplicas: 1
+  replicas: 1
+  unavailableReplicas: 0
+  updatedReplicas: 1

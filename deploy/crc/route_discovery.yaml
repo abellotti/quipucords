@@ -1,0 +1,28 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  creationTimestamp: "2023-04-13T07:17:18Z"
+  name: discovery
+  namespace: discovery
+  resourceVersion: "656718"
+  uid: 85830490-4581-4fbd-90f9-7b5761b9b256
+spec:
+  host: discovery.apps-crc.testing
+  path: /
+  port:
+    targetPort: 8000
+  to:
+    kind: Service
+    name: discovery-ui
+    weight: 100
+  wildcardPolicy: None
+status:
+  ingress:
+  - conditions:
+    - lastTransitionTime: "2023-04-13T07:17:18Z"
+      status: "True"
+      type: Admitted
+    host: discovery.apps-crc.testing
+    routerCanonicalHostname: router-default.apps-crc.testing
+    routerName: default
+    wildcardPolicy: None

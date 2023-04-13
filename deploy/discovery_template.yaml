@@ -7,7 +7,7 @@ metadata:
   namespace: discovery
   annotations:
     description: The Discovery Server application
-    tags: quipucords,discovery
+    tags: discovery
 objects:
 - apiVersion: v1
   kind: ServiceAccount
@@ -16,19 +16,155 @@ objects:
   metadata:
     name: discovery-sa
     namespace: discovery
-- apiVersion: apps.openshift.io/v1
-  kind: DeploymentConfig
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: discovery-data-volume-claim
+    namespace: discovery
+  spec:
+    accessModes:
+    - ReadWriteMany
+    volumeMode: Filesystem
+    resources:
+      requests:
+        storage: 32Gi
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: discovery-log-volume-claim
+    namespace: discovery
+  spec:
+    accessModes:
+    - ReadWriteMany
+    volumeMode: Filesystem
+    resources:
+      requests:
+        storage: 16Gi
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: discovery-server
+    namespace: discovery
+  spec:
+    selector:
+      app: discovery-quipucords
+    ports:
+    - port: ${{DISCOVERY_SERVER_PORT}}
+      protocol: TCP
+      targetPort: ${{DISCOVERY_SERVER_PORT}}
+    type: ClusterIP
+    internalTrafficPolicy: Cluster
+    ipFamilites:
+    - IPv4
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: discovery-redis
+    namespace: discovery
+  spec:
+    selector:
+      app: discovery-redis
+    ports:
+    - port: ${{DISCOVERY_REDIS_PORT}}
+      protocol: TCP
+      targetPort: ${{DISCOVERY_REDIS_PORT}}
+    type: ClusterIP
+    internalTrafficPolicy: Cluster
+    ipFamilites:
+    - IPv4
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: discovery-db
+    namespace: discovery
+  spec:
+    selector:
+      app: discovery-db
+    ports:
+    - port: ${{DISCOVERY_DBMS_PORT}}
+      protocol: TCP
+      targetPort: ${{DISCOVERY_DBMS_PORT}}
+    type: ClusterIP
+    internalTrafficPolicy: Cluster
+    ipFamilites:
+    - IPv4
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: discovery-server
+    namespace: discovery
+  spec:
+    host: ${DISCOVERY_SERVER_HOSTNAME}
+    path: /
+    port:
+      targetPort: ${{DISCOVERY_SERVER_PORT}}
+    to:
+      kind: Service
+      name: discovery-server
+      weight: 100
+    wildcardPolicy: None
+  status:
+    ingress:
+    - conditions:
+      host: ${DISCOVERY_SERVER_HOSTNAME}
+      wildcardPolicy: None
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: discovery-redis
+    namespace: discovery
+  spec:
+    host: ${DISCOVERY_REDIS_HOSTNAME}
+    path: /
+    port:
+      targetPort: ${{DISCOVERY_REDIS_PORT}}
+    to:
+      kind: Service
+      name: discovery-redis
+      weight: 100
+    wildcardPolicy: None
+  status:
+    ingress:
+    - conditions:
+      host: ${DISCOVERY_REDIS_HOSTNAME}
+      wildcardPolicy: None
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: discovery-db
+    namespace: discovery
+  spec:
+    host: ${DISCOVERY_DBMS_HOSTNAME}
+    path: /
+    port:
+      targetPort: ${{DISCOVERY_DBMS_PORT}}
+    to:
+      kind: Service
+      name: discovery-db
+      weight: 100
+    wildcardPolicy: None
+  status:
+    ingress:
+    - conditions:
+      host: ${DISCOVERY_DBMS_HOSTNAME}
+      wildcardPolicy: None
+- apiVersion: apps/v1
+  kind: Deployment
   metadata:
     name: discovery-quipucords
     namespace: discovery
   spec:
     replicas: 1
+    selector:
+      matchLabels:
+        app: discovery-quipucords
     strategy:
       type: Recreate
     template:
       metadata:
         labels:
-          deploymentconfig: quipucords
+          app: discovery-quipucords
+          deployment: discovery
       spec:
         containers:
           - name: discovery-quipucords
@@ -37,24 +173,44 @@ objects:
             serviceAccount: discovery-sa
             serviceAccountName: discovery-sa
             ports:
-              - containerPort: 443
+              - containerPort: 8000
                 protocol: TCP
               - containerPort: 5678
                 protocol: TCP
-            command: [ "/bin/sh", "-c", "/deploy/server_run.sh" ]
+            command:
+              - /bin/bash
+              - '-c'
+              - make server-migrate server-set-superuser -C /app &&
+                python quipucords/manage.py runserver --nostatic
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              seccompProfile:
+                type: "RuntimeDefault"
+            volumeMounts:
+            - mountPath: /var/data
+              name: discovery-data-volume-claim
+            - mountPath: /var/log
+              name: discovery-log-volume-claim
+            - mountPath: /.ansible
+              name: discovery-data-volume-claim
             env:
               - name: ANSIBLE_LOG_LEVEL
                 value: "3"
+              - name: DJANGO_SECRET_PATH
+                value: "${DJANGO_SECRET_PATH}"
               - name: QPC_DBMS
                 value: "postgres"
               - name: QPC_DBMS_DATABASE
                 value: "qpc"
               - name: QPC_DBMS_HOST
-                value: "discovery-db"
+                value: "${DISCOVERY_DBMS_HOSTNAME}"
               - name: QPC_DBMS_PASSWORD
                 value: "qpc"
               - name: QPC_DBMS_PORT
-                value: "5432"
+                value: "${DISCOVERY_DBMS_PORT}"
               - name: QPC_DBMS_USER
                 value: "qpc"
               - name: QPC_SERVER_TIMEOUT
@@ -68,27 +224,38 @@ objects:
               - name: QPC_LOG_ALL_ENV_VARS_AT_STARTUP
                 value: "False"
               - name: REDIS_HOST
-                value: "discovery-redis"
+                value: "${DISCOVERY_REDIS_HOSTNAME}"
               - name: REDIS_PASSWORD
                 value: "qpc"
         imagePullSecrets:
         - name: discovery-pull-secret
         restartPolicy: Always
+        volumes:
+        - name: discovery-data-volume-claim
+          persistentVolumeClaim:
+            claimName: discovery-data-volume-claim
+        - name: discovery-log-volume-claim
+          persistentVolumeClaim:
+            claimName: discovery-log-volume-claim
     triggers:
     - type: ConfigChange
-- apiVersion: apps.openshift.io/v1
-  kind: DeploymentConfig
+- apiVersion: apps/v1
+  kind: Deployment
   metadata:
     name: discovery-celery-worker
     namespace: discovery
   spec:
     replicas: "${{DISCOVERY_CELERY_WORKER_MINIMUM_REPLICA_COUNT}}"
+    selector:
+      matchLabels:
+        app: discovery-celery-worker
     strategy:
       type: Recreate
     template:
       metadata:
         labels:
-          deploymentconfig: discovery-celery-worker
+          app: discovery-celery-worker
+          deployment: discovery-celery-worker
       spec:
         containers:
           - name: discovery-celery-worker
@@ -97,29 +264,56 @@ objects:
             serviceAccount: discovery-sa
             serviceAccountName: discovery-sa
             command: [ "/bin/sh", "-c", "/deploy/entrypoint_celery_worker.sh" ]
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              seccompProfile:
+                type: "RuntimeDefault"
+            volumeMounts:
+            - mountPath: /var/data
+              name: discovery-data-volume-claim
+            - mountPath: /var/log
+              name: discovery-log-volume-claim
+            - mountPath: /.ansible
+              name: discovery-data-volume-claim
             env:
+              - name: DJANGO_SECRET_PATH
+                value: "${DJANGO_SECRET_PATH}"
               - name: REDIS_HOST
-                value: "discovery-redis"
+                value: "${DISCOVERY_REDIS_HOSTNAME}"
               - name: REDIS_PASSWORD
                 value: "qpc"
         imagePullSecrets:
         - name: discovery-pull-secret
         restartPolicy: Always
+        volumes:
+        - name: discovery-data-volume-claim
+          persistentVolumeClaim:
+            claimName: discovery-data-volume-claim
+        - name: discovery-log-volume-claim
+          persistentVolumeClaim:
+            claimName: discovery-log-volume-claim
     triggers:
     - type: ConfigChange
-- apiVersion: apps.openshift.io/v1
-  kind: DeploymentConfig
+- apiVersion: apps/v1
+  kind: Deployment
   metadata:
     name: discovery-db
     namespace: discovery
   spec:
     replicas: 1
+    selector:
+      matchLabels:
+        app: discovery-db
     strategy:
       type: Recreate
     template:
       metadata:
         labels:
-          deploymentconfig: discovery-db
+          app: discovery-db
+          deployment: discovery-db
       spec:
         containers:
           - name: discovery-db
@@ -127,13 +321,22 @@ objects:
             imagePullPolicy: Always
             serviceAccount: discovery-sa
             serviceAccountName: discovery-sa
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              seccompProfile:
+                type: "RuntimeDefault"
+            volumeMounts:
+            - mountPath: /var/lib/psql/data
+              name: discovery-data-volume-claim
             ports:
-              - containerPort: 5432
+              - containerPort: ${{DISCOVERY_DBMS_PORT}}
                 protocol: TCP
             readinessProbe:
               exec:
-                command:
-                - /bin/pg_is_ready -U postgres
+                command: [ "/bin/pg_isready", "-U", "postgres" ]
               failureThreshold: 3
               initialDelaySeconds: 30
               periodSeconds: 10
@@ -148,22 +351,30 @@ objects:
                 value: "qpc"
         imagePullSecrets:
         - name: discovery-pull-secret
+        volumes:
+        - name: discovery-data-volume-claim
+          persistentVolumeClaim:
+            claimName: discovery-data-volume-claim
         restartPolicy: Always
     triggers:
     - type: ConfigChange
-- apiVersion: apps.openshift.io/v1
-  kind: DeploymentConfig
+- apiVersion: apps/v1
+  kind: Deployment
   metadata:
     name: discovery-redis
     namespace: discovery
   spec:
     replicas: 1
+    selector:
+      matchLabels:
+        app: discovery-redis
     strategy:
       type: Recreate
     template:
       metadata:
         labels:
-          deploymentconfig: quipucords
+          app: discovery-redis
+          deployment: quipucords-redis
       spec:
         containers:
           - name: discovery-redis
@@ -171,8 +382,15 @@ objects:
             imagePullPolicy: Always
             serviceAccount: discovery-sa
             serviceAccountName: discovery-sa
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              seccompProfile:
+                type: "RuntimeDefault"
             ports:
-              - containerPort: 6379
+              - containerPort: ${{DISCOVERY_REDIS_PORT}}
                 protocol: TCP
             env:
               - name: REDIS_PASSWORD
@@ -183,7 +401,35 @@ objects:
     triggers:
     - type: ConfigChange
 parameters:
+- name: DJANGO_SECRET_PATH
+  displayName: Path for the Django secret
+  description: This is the path for the Django secret
+  value: "/app/quipucords/secret.txt"
 - name: DISCOVERY_CELERY_WORKER_MINIMUM_REPLICA_COUNT
   displayName: Discovery Celery Worker Minimum Replica Count
   description: This is the starting number of Celery workers replicas requested.
   value: '2'
+- name: DISCOVERY_SERVER_HOSTNAME
+  displayName: Discovery Server Server Host Name
+  description: This is the external host name of the Discovery server.
+  value: "discovery-server.apps-crc.testing"
+- name: DISCOVERY_SERVER_PORT
+  displayName: Discovery Server Port (API/UI)
+  description: This is the port for the quipucords server.
+  value: "8000"
+- name: DISCOVERY_REDIS_HOSTNAME
+  displayName: Discovery Redis Server Host Name
+  description: This is the external host name of the Discovery Redis Server.
+  value: "discovery-redis.discovery.svc.cluster.local"
+- name: DISCOVERY_REDIS_PORT
+  displayName: Discovery Redis Port
+  description: This is the port for the quipucords redis server.
+  value: "6379"
+- name: DISCOVERY_DBMS_HOSTNAME
+  displayName: Discovery PostgresQL Server Host Name
+  description: This is the external host name of the Discovery database.
+  value: "discovery-db.discovery.svc.cluster.local"
+- name: DISCOVERY_DBMS_PORT
+  displayName: Discovery PostgresQL Database Port
+  description: This is the port for the quipucords postgresql database.
+  value: "5432"

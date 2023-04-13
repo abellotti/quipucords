@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+    pv.kubernetes.io/provisioned-by: kubevirt.io.hostpath-provisioner
+    volume.kubernetes.io/provisioner-deletion-secret-name: ""
+    volume.kubernetes.io/provisioner-deletion-secret-namespace: ""
+  creationTimestamp: "2023-04-13T06:24:16Z"
+  finalizers:
+  - kubernetes.io/pv-protection
+  name: pvc-b608c82f-6041-40d0-b5c1-12a75a305a78
+  resourceVersion: "643036"
+  uid: 2f90d078-eb21-4e72-8ad8-3fc4c6ab8ed7
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 30Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: quipucords-db-claim
+    namespace: discovery
+    resourceVersion: "643029"
+    uid: b608c82f-6041-40d0-b5c1-12a75a305a78
+  csi:
+    driver: kubevirt.io.hostpath-provisioner
+    volumeAttributes:
+      csi.storage.k8s.io/pv/name: pvc-b608c82f-6041-40d0-b5c1-12a75a305a78
+      csi.storage.k8s.io/pvc/name: quipucords-db-claim
+      csi.storage.k8s.io/pvc/namespace: discovery
+      storage.kubernetes.io/csiProvisionerIdentity: 1681357666485-8081-kubevirt.io.hostpath-provisioner-crc-5nv89-master-0
+      storagePool: local
+    volumeHandle: pvc-b608c82f-6041-40d0-b5c1-12a75a305a78
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: topology.hostpath.csi/node
+          operator: In
+          values:
+          - crc-5nv89-master-0
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: crc-csi-hostpath-provisioner
+  volumeMode: Filesystem
+status:
+  phase: Bound

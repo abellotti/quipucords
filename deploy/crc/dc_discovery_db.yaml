@@ -1,0 +1,94 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: "2023-04-13T03:28:40Z"
+  generation: 7
+  labels:
+    app.kubernetes.io/component: discovery
+    app.kubernetes.io/instance: discovery
+    template: discovery
+  name: discovery-db
+  namespace: discovery
+  resourceVersion: "670121"
+  uid: a82e8f35-44aa-4488-9b3e-eb17458e0dbc
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    deploymentconfig: discovery-db
+  strategy:
+    activeDeadlineSeconds: 21600
+    recreateParams:
+      timeoutSeconds: 600
+    resources: {}
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftNewApp
+      creationTimestamp: null
+      labels:
+        app: discovery-db
+        deploymentconfig: discovery-db
+    spec:
+      containers:
+      - env:
+        - name: POSTGRESQL_USER
+          value: qpc
+        - name: POSTGRESQL_PASSWORD
+          value: qpc
+        - name: POSTGRESQL_DATABASE
+          value: qpc
+        image: registry.redhat.io/rhel8/postgresql-12
+        imagePullPolicy: Always
+        name: discovery-db
+        ports:
+        - containerPort: 5432
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - /bin/echo "TRUE"
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 45
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: discovery-pull-secret
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+  - type: ConfigChange
+status:
+  availableReplicas: 0
+  conditions:
+  - lastTransitionTime: "2023-04-13T03:28:41Z"
+    lastUpdateTime: "2023-04-13T03:28:41Z"
+    message: Deployment config does not have minimum availability.
+    status: "False"
+    type: Available
+  - lastTransitionTime: "2023-04-13T08:12:27Z"
+    lastUpdateTime: "2023-04-13T08:12:27Z"
+    message: replication controller "discovery-db-5" has failed progressing
+    reason: ProgressDeadlineExceeded
+    status: "False"
+    type: Progressing
+  details:
+    causes:
+    - type: ConfigChange
+    message: config change
+  latestVersion: 5
+  observedGeneration: 7
+  replicas: 0
+  unavailableReplicas: 0
+  updatedReplicas: 0

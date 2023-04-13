@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    alpha.image.policy.openshift.io/resolve-names: '*'
+    app.openshift.io/route-disabled: "false"
+    deployment.kubernetes.io/revision: "2"
+    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"qpc-db:latest","namespace":"discovery"},"fieldPath":"spec.template.spec.containers[?(@.name==\"qpc-db\")].image","pause":"false"}]'
+    openshift.io/generated-by: OpenShiftWebConsole
+  creationTimestamp: "2023-04-13T08:25:25Z"
+  generation: 2
+  labels:
+    app: qpc-db
+    app.kubernetes.io/component: qpc-db
+    app.kubernetes.io/instance: qpc-db
+    app.kubernetes.io/name: qpc-db
+    app.kubernetes.io/part-of: qpc-db
+    app.openshift.io/runtime: postgresql
+    app.openshift.io/runtime-namespace: discovery
+  name: qpc-db
+  namespace: discovery
+  resourceVersion: "798304"
+  uid: ba8617b2-1ede-45c8-afd4-3c9f35f88b82
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: qpc-db
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftWebConsole
+      creationTimestamp: null
+      labels:
+        app: qpc-db
+        deployment: qpc-db
+    spec:
+      containers:
+      - env:
+        - name: POSTGRESQL_USER
+          value: qpc
+        - name: POSTGRESQL_PASSWORD
+          value: qpc
+        - name: POSTGRESQL_DATABASE
+          value: qpc
+        image: image-registry.openshift-image-registry.svc:5000/discovery/qpc-db@sha256:daf2fb3b5e652d8fd5cd9fc55e63ed7d684f96064ac373808aa79251279cc6c7
+        imagePullPolicy: Always
+        name: qpc-db
+        ports:
+        - containerPort: 5432
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2023-04-13T08:25:26Z"
+    lastUpdateTime: "2023-04-13T08:29:13Z"
+    message: ReplicaSet "qpc-db-c897c65b5" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2023-04-13T19:04:53Z"
+    lastUpdateTime: "2023-04-13T19:04:53Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 2
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1
