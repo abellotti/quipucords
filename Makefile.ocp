@@ -54,8 +54,6 @@ undeploy:
 	oc delete --ignore-not-found=true services/discovery-redis
 # Routes
 	oc delete --ignore-not-found=true routes/discovery-server
-	oc delete --ignore-not-found=true routes/discovery-db
-	oc delete --ignore-not-found=true routes/discovery-redis
 # Physical Volume Claims
 	oc delete --ignore-not-found=true pvc/discovery-data-volume-claim
 	oc delete --ignore-not-found=true pvc/discovery-log-volume-claim

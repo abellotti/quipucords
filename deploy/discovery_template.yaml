@@ -108,46 +108,6 @@ objects:
     - conditions:
       host: ${DISCOVERY_SERVER_HOSTNAME}
       wildcardPolicy: None
-- apiVersion: route.openshift.io/v1
-  kind: Route
-  metadata:
-    name: discovery-redis
-    namespace: discovery
-  spec:
-    host: ${DISCOVERY_REDIS_HOSTNAME}
-    path: /
-    port:
-      targetPort: ${{DISCOVERY_REDIS_PORT}}
-    to:
-      kind: Service
-      name: discovery-redis
-      weight: 100
-    wildcardPolicy: None
-  status:
-    ingress:
-    - conditions:
-      host: ${DISCOVERY_REDIS_HOSTNAME}
-      wildcardPolicy: None
-- apiVersion: route.openshift.io/v1
-  kind: Route
-  metadata:
-    name: discovery-db
-    namespace: discovery
-  spec:
-    host: ${DISCOVERY_DBMS_HOSTNAME}
-    path: /
-    port:
-      targetPort: ${{DISCOVERY_DBMS_PORT}}
-    to:
-      kind: Service
-      name: discovery-db
-      weight: 100
-    wildcardPolicy: None
-  status:
-    ingress:
-    - conditions:
-      host: ${DISCOVERY_DBMS_HOSTNAME}
-      wildcardPolicy: None
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
