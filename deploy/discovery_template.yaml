@@ -173,7 +173,7 @@ objects:
             serviceAccount: discovery-sa
             serviceAccountName: discovery-sa
             ports:
-              - containerPort: 8000
+              - containerPort: ${{DISCOVERY_SERVER_PORT}}
                 protocol: TCP
               - containerPort: 5678
                 protocol: TCP
@@ -408,7 +408,7 @@ parameters:
 - name: DISCOVERY_CELERY_WORKER_MINIMUM_REPLICA_COUNT
   displayName: Discovery Celery Worker Minimum Replica Count
   description: This is the starting number of Celery workers replicas requested.
-  value: '2'
+  value: '3'
 - name: DISCOVERY_SERVER_HOSTNAME
   displayName: Discovery Server Server Host Name
   description: This is the external host name of the Discovery server.
