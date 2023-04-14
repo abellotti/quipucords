@@ -168,7 +168,7 @@ objects:
       spec:
         containers:
           - name: discovery-quipucords
-            image: quay.io/abellott/quipucords:latest
+            image: ${DISCOVERY_SERVER_IMAGE}
             imagePullPolicy: Always
             serviceAccount: discovery-sa
             serviceAccountName: discovery-sa
@@ -259,7 +259,7 @@ objects:
       spec:
         containers:
           - name: discovery-celery-worker
-            image: quay.io/abellott/quipucords:latest
+            image: ${DISCOVERY_SERVER_IMAGE}
             imagePullPolicy: Always
             serviceAccount: discovery-sa
             serviceAccountName: discovery-sa
@@ -405,6 +405,10 @@ parameters:
   displayName: Path for the Django secret
   description: This is the path for the Django secret
   value: "/app/quipucords/secret.txt"
+- name: DISCOVERY_SERVER_IMAGE
+  displayname: Container image for the Discovery server.
+  description: This is the image for the Discovery server.
+  value: "quay.io/abellott/quipucords:latest"
 - name: DISCOVERY_CELERY_WORKER_MINIMUM_REPLICA_COUNT
   displayName: Discovery Celery Worker Minimum Replica Count
   description: This is the starting number of Celery workers replicas requested.
