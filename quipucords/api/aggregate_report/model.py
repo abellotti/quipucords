@@ -21,12 +21,14 @@ iterates through all the facts exactly once to minimize expected execution time.
 """
 
 import logging
+import time
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from datetime import date
 from math import ceil
 
+from api.common.models import BaseModel
 from api.deployments_report.model import Product, SystemFingerprint
 from api.inspectresult.model import InspectResult
 from api.report.model import Report
@@ -39,8 +41,7 @@ logger = logging.getLogger(__name__)
 UNKNOWN: str = "unknown"  # placeholder string for missing names/versions/kinds.
 
 
-@dataclass
-class AggregateReport:
+class AggregateReport(BaseModel):
     """Results of the aggregate report."""
 
     # Note the lack of special reporting needs for Satellite or RHACS here.
@@ -92,11 +93,14 @@ class AggregateReport:
 def reformat_aggregate_report_to_dict(aggregated: AggregateReport) -> dict:
     """Reformat an AggregateReport into a slightly more readable dict."""
     results, diagnostics = {}, {}
+    t1 = time.time() * 1000.00
     for key, value in asdict(aggregated).items():
         if key.startswith("missing_") or key.startswith("inspect_result_status_"):
             diagnostics[key] = value
         else:
             results[key] = value
+    t2 = time.time() * 1000.00
+    print("XXXXXXXXXX reformat_aggregate_report_to_dict Time Taken: ", t2 - t1)
     return {
         "results": results,
         "diagnostics": diagnostics,
@@ -110,8 +114,14 @@ def get_aggregate_report_by_report_id(report_id: int) -> dict | None:
     TODO Turn this into a database lookup after we start storing AggregateReport.
     """
     try:
+        import time
+
+        t1 = time.time() * 1000.00
         report = Report.objects.get(pk=report_id)
         aggregated = build_aggregate_report(report.id)
+        t2 = time.time() * 1000.00
+
+        print("XXXXXX get_aggregate_by_report_id Time Taken ", t2 - t1)
         return reformat_aggregate_report_to_dict(aggregated)
     except Report.DoesNotExist:
         return None
