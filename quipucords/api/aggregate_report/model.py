@@ -45,6 +45,10 @@ UNKNOWN: str = "unknown"  # placeholder string for missing names/versions/kinds.
 class AggregateReport(BaseModel):
     """Results of the aggregate report."""
 
+    report = models.OneToOneField(
+        "Report", models.CASCADE, related_name="aggregate_report", null=True
+    )
+
     # Note the lack of special reporting needs for Satellite or RHACS here.
     # At the time of this writing, Justin says this is correct and we have none.
 
@@ -330,12 +334,16 @@ def _aggregate_from_raw_facts(
 
 def build_aggregate_report(report_id: int) -> AggregateReport:
     """Aggregate various totals from the facts related to the given report ID."""
+    try:
+        aggregated = AggregateReport.objects.get(report_id=report_id)
+        print("FFFFFFFFFFFFF FOUND ONE ", aggregated.id)
+        return aggregated
+    except AggregateReport.DoesNotExist:
+        print("NNNNNNNNNNNNN DID NOT FIND ONE ")
+        aggregated = AggregateReport.objects.create(report_id=report_id)
+        print("NNNNNNNNNNNNN NEW ONE CREATED ", aggregated.id)
+
     report = Report.objects.get(pk=report_id)
-    if report.aggregate_report:
-        return report.aggregate_report
-    aggregated = report.aggregate_report = AggregateReport.objects.create()
-    print("AGGREGATE_REPORT_ID = ", aggregated.id)
-    report.save()
 
     # Note that `aggregated` is treated as a pass-by-reference here and is updated
     # directly in these functions instead of returning a new instance.
