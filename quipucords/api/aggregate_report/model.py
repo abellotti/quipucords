@@ -114,8 +114,11 @@ def get_aggregate_report_by_report_id(report_id: int) -> dict | None:
         import time
 
         t1 = time.time() * 1000.00
+        print("XXXXXXX in get_aggregate_report_by_report_id ", report_id)
         report = Report.objects.get(pk=report_id)
+        print("XXXX report = ", report)
         aggregated = build_aggregate_report(report.id)
+        print("XXXX aggregated = ", aggregated)
         t2 = time.time() * 1000.00
 
         print("XXXXXX get_aggregate_by_report_id Time Taken ", t2 - t1)
@@ -328,7 +331,11 @@ def _aggregate_from_raw_facts(
 def build_aggregate_report(report_id: int) -> AggregateReport:
     """Aggregate various totals from the facts related to the given report ID."""
     report = Report.objects.get(pk=report_id)
-    aggregated = report.aggregate_report
+    if report.aggregate_report:
+        return report.aggregate_report
+    aggregated = report.aggregate_report = AggregateReport.objects.create()
+    print("AGGREGATE_REPORT_ID = ", aggregated.id)
+    report.save()
 
     # Note that `aggregated` is treated as a pass-by-reference here and is updated
     # directly in these functions instead of returning a new instance.
