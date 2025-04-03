@@ -364,16 +364,17 @@ def _aggregate_from_raw_facts(
 
 def build_aggregate_report(report_id: int) -> AggregateReport:
     """Aggregate various totals from the facts related to the given report ID."""
+    report = Report.objects.get(pk=report_id)
     try:
         aggregated = AggregateReport.objects.get(report_id=report_id)
-        print("FFFFFFFFFFFFF FOUND ONE ", aggregated.id)
-        return aggregated
+        if report.updated_at <= aggregated.updated_at:
+            print("FFFFFFFF REPORT DID NOT CHANGE SINCE LAST AGGREGATE REPORT")
+            return aggregated
+        print("CCCCCCCCCCCCC REPORT CHANGED, REGENERATING AGGREGATE REPORT")
     except AggregateReport.DoesNotExist:
         print("NNNNNNNNNNNNN DID NOT FIND ONE ")
         aggregated = AggregateReport.objects.create(report_id=report_id)
         print("NNNNNNNNNNNNN NEW ONE CREATED ", aggregated.id)
-
-    report = Report.objects.get(pk=report_id)
 
     # Note that `aggregated` is treated as a pass-by-reference here and is updated
     # directly in these functions instead of returning a new instance.
