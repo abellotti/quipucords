@@ -1,7 +1,7 @@
 """Test the aggregate report model generation."""
 
-from datetime import date
 import time
+from datetime import date
 
 import pytest
 

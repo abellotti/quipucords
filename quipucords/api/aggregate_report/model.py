@@ -29,8 +29,8 @@ from math import ceil
 from django.db import models
 from django.forms import model_to_dict
 
-from api.deployments_report.model import Product, SystemFingerprint
 from api.common.models import BaseModel
+from api.deployments_report.model import Product, SystemFingerprint
 from api.inspectresult.model import InspectResult
 from api.report.model import Report
 from constants import DataSources
@@ -53,29 +53,57 @@ class AggregateReport(BaseModel):
     # At the time of this writing, Justin says this is correct and we have none.
 
     ansible_hosts_all = models.PositiveIntegerField(default=0, blank=True, null=True)
-    ansible_hosts_in_database = models.PositiveIntegerField(default=0, blank=True, null=True)
-    ansible_hosts_in_jobs = models.PositiveIntegerField(default=0, blank=True, null=True)
-    inspect_result_status_failed = models.PositiveIntegerField(default=0, blank=True, null=True)
-    inspect_result_status_success = models.PositiveIntegerField(default=0, blank=True, null=True)
-    inspect_result_status_unknown = models.PositiveIntegerField(default=0, blank=True, null=True)
-    inspect_result_status_unreachable = models.PositiveIntegerField(default=0, blank=True, null=True)
+    ansible_hosts_in_database = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
+    ansible_hosts_in_jobs = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
+    inspect_result_status_failed = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
+    inspect_result_status_success = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
+    inspect_result_status_unknown = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
+    inspect_result_status_unreachable = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
     instances_hypervisor = models.PositiveIntegerField(default=0, blank=True, null=True)
     instances_not_redhat = models.PositiveIntegerField(default=0, blank=True, null=True)
     instances_physical = models.PositiveIntegerField(default=0, blank=True, null=True)
     instances_unknown = models.PositiveIntegerField(default=0, blank=True, null=True)
     instances_virtual = models.PositiveIntegerField(default=0, blank=True, null=True)
-    jboss_eap_cores_physical = models.PositiveIntegerField(default=0, blank=True, null=True)
-    jboss_eap_cores_virtual = models.PositiveIntegerField(default=0, blank=True, null=True)
+    jboss_eap_cores_physical = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
+    jboss_eap_cores_virtual = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
     jboss_eap_instances = models.PositiveIntegerField(default=0, blank=True, null=True)
-    jboss_ws_cores_physical = models.PositiveIntegerField(default=0, blank=True, null=True)
-    jboss_ws_cores_virtual = models.PositiveIntegerField(default=0, blank=True, null=True)
+    jboss_ws_cores_physical = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
+    jboss_ws_cores_virtual = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
     jboss_ws_instances = models.PositiveIntegerField(default=0, blank=True, null=True)
-    missing_cpu_core_count = models.PositiveIntegerField(default=0, blank=True, null=True)
-    missing_cpu_socket_count = models.PositiveIntegerField(default=0, blank=True, null=True)
+    missing_cpu_core_count = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
+    missing_cpu_socket_count = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
     missing_name = models.PositiveIntegerField(default=0, blank=True, null=True)
     missing_pem_files = models.PositiveIntegerField(default=0, blank=True, null=True)
-    missing_system_creation_date = models.PositiveIntegerField(default=0, blank=True, null=True)
-    missing_system_purpose = models.PositiveIntegerField(default=0, blank=True, null=True)
+    missing_system_creation_date = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
+    missing_system_purpose = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
     openshift_cores = models.PositiveIntegerField(default=0, blank=True, null=True)
     openshift_operators_by_name = models.JSONField(null=False, default=dict)
     openshift_operators_by_kind = models.JSONField(null=False, default=dict)
@@ -89,8 +117,12 @@ class AggregateReport(BaseModel):
     # Note: The following attributes come exclusively from raw facts.
     # For now, that's our only option, and these are required outputs.
     # TODO Refactor how we populate these when we restructure the underlying data.
-    openshift_cluster_instances = models.PositiveIntegerField(default=0, blank=True, null=True)
-    openshift_node_instances = models.PositiveIntegerField(default=0, blank=True, null=True)
+    openshift_cluster_instances = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
+    openshift_node_instances = models.PositiveIntegerField(
+        default=0, blank=True, null=True
+    )
 
 
 def reformat_aggregate_report_to_dict(aggregated: AggregateReport) -> dict:
@@ -111,9 +143,7 @@ def reformat_aggregate_report_to_dict(aggregated: AggregateReport) -> dict:
 
 
 def get_aggregate_report_by_report_id(report_id: int) -> dict | None:
-    """
-    Get the aggregate report data for the given report ID.
-    """
+    """Get the aggregate report data for the given report ID."""
     try:
         import time
 
