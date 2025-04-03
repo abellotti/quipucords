@@ -29,8 +29,8 @@ from math import ceil
 from django.db import models
 from django.forms import model_to_dict
 
-from api.common.models import BaseModel
 from api.deployments_report.model import Product, SystemFingerprint
+from api.common.models import BaseModel
 from api.inspectresult.model import InspectResult
 from api.report.model import Report
 from constants import DataSources
@@ -109,8 +109,6 @@ def reformat_aggregate_report_to_dict(aggregated: AggregateReport) -> dict:
 def get_aggregate_report_by_report_id(report_id: int) -> dict | None:
     """
     Get the aggregate report data for the given report ID.
-
-    TODO Turn this into a database lookup after we start storing AggregateReport.
     """
     try:
         import time
@@ -330,7 +328,7 @@ def _aggregate_from_raw_facts(
 def build_aggregate_report(report_id: int) -> AggregateReport:
     """Aggregate various totals from the facts related to the given report ID."""
     report = Report.objects.get(pk=report_id)
-    aggregated = AggregateReport()
+    aggregated = report.aggregate_report
 
     # Note that `aggregated` is treated as a pass-by-reference here and is updated
     # directly in these functions instead of returning a new instance.

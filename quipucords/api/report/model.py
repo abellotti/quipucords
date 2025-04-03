@@ -27,6 +27,10 @@ class Report(BaseModel):
     )
     cached_csv = models.TextField(null=True)
 
+    aggregate_report = models.OneToOneField(
+        "AggregateReport", models.CASCADE, related_name="report", null=True
+    )
+
     @cached_property
     def sources(self):
         """
