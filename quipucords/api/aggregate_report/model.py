@@ -40,6 +40,7 @@ from utils.datetime import average_date
 logger = logging.getLogger(__name__)
 
 UNKNOWN: str = "unknown"  # placeholder string for missing names/versions/kinds.
+AGGREGATE_DICT_SKIP_ATTRS: list = ["id", "report"]
 
 
 class AggregateReport(BaseModel):
@@ -135,7 +136,7 @@ def reformat_aggregate_report_to_dict(aggregated: AggregateReport) -> dict:
     )
     for key, value in model_to_dict(aggregated).items():
         print("reformat: ", key, " = ", value)
-        if key in ["id", "report"]:
+        if key in AGGREGATE_DICT_SKIP_ATTRS:
             continue
         if key.startswith("missing_") or key.startswith("inspect_result_status_"):
             diagnostics[key] = value
