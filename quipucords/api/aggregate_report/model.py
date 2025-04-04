@@ -129,13 +129,22 @@ def reformat_aggregate_report_to_dict(aggregated: AggregateReport) -> dict:
     """Reformat an AggregateReport into a slightly more readable dict."""
     results, diagnostics = {}, {}
     t1 = time.time() * 1000.00
+    print(
+        "INPUT TO REFORMAT jboss_eap_cores_virtual = ",
+        aggregated.jboss_eap_cores_virtual,
+    )
     for key, value in model_to_dict(aggregated).items():
+        print("reformat: ", key, " = ", value)
+        if key in ["id", "report"]:
+            continue
         if key.startswith("missing_") or key.startswith("inspect_result_status_"):
             diagnostics[key] = value
         else:
             results[key] = value
     t2 = time.time() * 1000.00
     print("XXXXXXXXXX reformat_aggregate_report_to_dict Time Taken: ", t2 - t1)
+    print("results     = ", results)
+    print("diagnostics = ", diagnostics)
     return {
         "results": results,
         "diagnostics": diagnostics,
@@ -156,6 +165,8 @@ def get_aggregate_report_by_report_id(report_id: int) -> dict | None:
         t2 = time.time() * 1000.00
 
         print("XXXXXX get_aggregate_by_report_id Time Taken ", t2 - t1)
+        result = reformat_aggregate_report_to_dict(aggregated)
+        print("XXXXXX get_aggregate_by_report_id returning: ", result)
         return reformat_aggregate_report_to_dict(aggregated)
     except Report.DoesNotExist:
         return None
@@ -404,4 +415,6 @@ def build_aggregate_report(report_id: int) -> AggregateReport:
         ),
     )
 
+    aggregated.save()
+    aggregated.refresh_from_db()
     return aggregated

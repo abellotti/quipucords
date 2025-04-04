@@ -329,9 +329,11 @@ def test_build_aggregate_report_system_fingerprint(
 ):
     """Test build_aggregate_report using generated Report, SystemFingerprints, etc."""
     report, expected_aggregate_report = report_and_expected_aggregate
-    aggregated: AggregateReport = build_aggregate_report(report.id)
+    aggregated = build_aggregate_report(report.id)
     assert aggregated is not None
-    assert aggregated == expected_aggregate_report
+    assert reformat_aggregate_report_to_dict(
+        aggregated
+    ) == reformat_aggregate_report_to_dict(expected_aggregate_report)
 
 
 @pytest.mark.django_db
@@ -344,6 +346,9 @@ def test_get_aggregate_report_by_report_id(
     aggregate = get_aggregate_report_by_report_id(report.id)
     t2 = time.time() * 1000.00
     print("XXXXXXXXXX get_aggregate_report_by_report_id: Time Taken: ", t2 - t1)
+    print("TESTING aggregate (FROM DB) = ", aggregate)
+    expected_aggregate = reformat_aggregate_report_to_dict(expected_aggregate_report)
+    print("TESTING expected_aggregate_report (FROM TEST) = ", expected_aggregate)
     assert aggregate == reformat_aggregate_report_to_dict(expected_aggregate_report)
 
 
