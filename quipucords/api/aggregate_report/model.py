@@ -21,7 +21,6 @@ iterates through all the facts exactly once to minimize expected execution time.
 """
 
 import logging
-import time
 from collections import defaultdict
 from collections.abc import Iterable
 from math import ceil
@@ -129,23 +128,13 @@ class AggregateReport(BaseModel):
 def reformat_aggregate_report_to_dict(aggregated: AggregateReport) -> dict:
     """Reformat an AggregateReport into a slightly more readable dict."""
     results, diagnostics = {}, {}
-    t1 = time.time() * 1000.00
-    print(
-        "INPUT TO REFORMAT jboss_eap_cores_virtual = ",
-        aggregated.jboss_eap_cores_virtual,
-    )
     for key, value in model_to_dict(aggregated).items():
-        print("reformat: ", key, " = ", value)
         if key in AGGREGATE_DICT_SKIP_ATTRS:
             continue
         if key.startswith("missing_") or key.startswith("inspect_result_status_"):
             diagnostics[key] = value
         else:
             results[key] = value
-    t2 = time.time() * 1000.00
-    print("XXXXXXXXXX reformat_aggregate_report_to_dict Time Taken: ", t2 - t1)
-    print("results     = ", results)
-    print("diagnostics = ", diagnostics)
     return {
         "results": results,
         "diagnostics": diagnostics,
@@ -155,19 +144,8 @@ def reformat_aggregate_report_to_dict(aggregated: AggregateReport) -> dict:
 def get_aggregate_report_by_report_id(report_id: int) -> dict | None:
     """Get the aggregate report data for the given report ID."""
     try:
-        import time
-
-        t1 = time.time() * 1000.00
-        print("XXXXXXX in get_aggregate_report_by_report_id ", report_id)
         report = Report.objects.get(pk=report_id)
-        print("XXXX report = ", report)
         aggregated = build_aggregate_report(report.id)
-        print("XXXX aggregated = ", aggregated)
-        t2 = time.time() * 1000.00
-
-        print("XXXXXX get_aggregate_by_report_id Time Taken ", t2 - t1)
-        result = reformat_aggregate_report_to_dict(aggregated)
-        print("XXXXXX get_aggregate_by_report_id returning: ", result)
         return reformat_aggregate_report_to_dict(aggregated)
     except Report.DoesNotExist:
         return None
@@ -380,13 +358,9 @@ def build_aggregate_report(report_id: int) -> AggregateReport:
     try:
         aggregated = AggregateReport.objects.get(report_id=report_id)
         if report.updated_at <= aggregated.updated_at:
-            print("FFFFFFFF REPORT DID NOT CHANGE SINCE LAST AGGREGATE REPORT")
             return aggregated
-        print("CCCCCCCCCCCCC REPORT CHANGED, REGENERATING AGGREGATE REPORT")
     except AggregateReport.DoesNotExist:
-        print("NNNNNNNNNNNNN DID NOT FIND ONE ")
         aggregated = AggregateReport.objects.create(report_id=report_id)
-        print("NNNNNNNNNNNNN NEW ONE CREATED ", aggregated.id)
 
     # Note that `aggregated` is treated as a pass-by-reference here and is updated
     # directly in these functions instead of returning a new instance.
@@ -417,5 +391,7 @@ def build_aggregate_report(report_id: int) -> AggregateReport:
     )
 
     aggregated.save()
+    # Make sure aggregated reflects the database's declared schema
+    # i.e. floats stored as int to be represented as such.
     aggregated.refresh_from_db()
     return aggregated

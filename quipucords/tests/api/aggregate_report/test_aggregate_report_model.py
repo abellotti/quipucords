@@ -1,6 +1,5 @@
 """Test the aggregate report model generation."""
 
-import time
 from datetime import date
 
 import pytest
@@ -342,13 +341,7 @@ def test_get_aggregate_report_by_report_id(
 ):
     """Test that if the Report exists, a proper report is generated."""
     report, expected_aggregate_report = report_and_expected_aggregate
-    t1 = time.time() * 1000.00
     aggregate = get_aggregate_report_by_report_id(report.id)
-    t2 = time.time() * 1000.00
-    print("XXXXXXXXXX get_aggregate_report_by_report_id: Time Taken: ", t2 - t1)
-    print("TESTING aggregate (FROM DB) = ", aggregate)
-    expected_aggregate = reformat_aggregate_report_to_dict(expected_aggregate_report)
-    print("TESTING expected_aggregate_report (FROM TEST) = ", expected_aggregate)
     assert aggregate == reformat_aggregate_report_to_dict(expected_aggregate_report)
 
 
