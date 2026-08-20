@@ -19,8 +19,8 @@ from api.auth.lightspeed.serializer import (
     LightspeedAuthLogoutResponseSerializer,
     LightspeedAuthStatusResponseSerializer,
 )
-from api.auth.utils import decode_jwt
 from api.common.enumerators import AuthStatus
+from api.common.tls_config import get_lightspeed_session
 from api.secure_token.model import SecureToken
 from quipucords.settings import QUIPUCORDS_AUTH_LIGHTSPEED_TIMEOUT
 
@@ -201,7 +201,8 @@ def get_sso_endpoint(endpoint):
     url = f"https://{lightspeed_sso_server}{OPENID_CONFIG_ENDPOINT}"  # Always SSL
     try:
         logger.info(messages.LIGHTSPEED_SSO_CONFIG_QUERY, url, endpoint)
-        response = requests.get(url, timeout=QUIPUCORDS_AUTH_LIGHTSPEED_TIMEOUT)
+        session = get_lightspeed_session()
+        response = session.get(url, timeout=QUIPUCORDS_AUTH_LIGHTSPEED_TIMEOUT)
     except ConnectionError as err:
         raise err
     except BaseHTTPError as err:
@@ -229,7 +230,8 @@ def lightspeed_request_auth():
     try:
         device_auth_endpoint = get_sso_endpoint(DEVICE_AUTH_ENDPOINT_KEY)
         logger.info(messages.LIGHTSPEED_LOGIN_REQUEST, device_auth_endpoint)
-        response = requests.post(
+        session = get_lightspeed_session()
+        response = session.post(
             device_auth_endpoint,
             headers=headers,
             data=params,
@@ -287,7 +289,8 @@ def lightspeed_wait_for_authorization(  # noqa: C901 PLR0911 PLR0912
             if not token_endpoint:
                 token_endpoint = get_sso_endpoint(ENDPOINT_KEY)
             logger.debug(messages.LIGHTSPEED_LOGIN_VERIFYING, token_endpoint)
-            response = requests.post(
+            session = get_lightspeed_session()
+            response = session.post(
                 token_endpoint,
                 headers=headers,
                 data=params,
@@ -311,6 +314,8 @@ def lightspeed_wait_for_authorization(  # noqa: C901 PLR0911 PLR0912
         if response.status_code == http.HTTPStatus.OK:
             token_response = response.json()
             lightspeed_jwt = token_response["access_token"]
+            # Use JWT verification module with PQC support
+            from api.auth.jwt_verification import decode_jwt
             decoded_lightspeed_jwt = decode_jwt(lightspeed_jwt)
             if not decoded_lightspeed_jwt:
                 update_secure_token_status(

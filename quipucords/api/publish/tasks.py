@@ -11,6 +11,7 @@ from urllib3.exceptions import HTTPError as BaseHTTPError
 
 from api import messages
 from api.auth.lightspeed.auth import get_lightspeed_secure_token
+from api.common.tls_config import get_lightspeed_session
 from api.insights_report.payload import generate_insights_tarball
 from api.publish.exceptions import PublishError
 from api.publish.model import PublishRequest
@@ -56,12 +57,12 @@ def _post_to_ingress(report_id, tarball, auth_token):
     logger.info("Posting report %d to %s", report_id, ingress_url)
 
     try:
-        response = requests.post(
+        session = get_lightspeed_session()
+        response = session.post(
             ingress_url,
             files=files,
             headers=headers,
             timeout=settings.QUIPUCORDS_AUTH_LIGHTSPEED_TIMEOUT,
-            verify=settings.QUIPUCORDS_LIGHTSPEED_SSL_VERIFY,
         )
     except (ConnectionError, BaseHTTPError) as err:
         raise PublishError(

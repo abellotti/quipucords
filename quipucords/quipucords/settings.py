@@ -643,6 +643,23 @@ QUIPUCORDS_LIGHTSPEED_SSL_VERIFY = env.bool(
     "QUIPUCORDS_LIGHTSPEED_SSL_VERIFY", default=True
 )
 
+# TLS configuration for Lightspeed communications
+# Enable modern TLS 1.3 with post-quantum key exchange support (RHEL 10+)
+# Requires oqs-provider to be installed for PQC; gracefully falls back to standard TLS 1.3
+QUIPUCORDS_ENABLE_PQC_TLS = env.bool("QUIPUCORDS_ENABLE_PQC_TLS", default=False)
+
+# JWT signature verification settings for Lightspeed authentication
+# SECURITY: JWT verification is DISABLED by default for backward compatibility.
+# Enable to cryptographically verify tokens from SSO server.
+QUIPUCORDS_LIGHTSPEED_JWT_VERIFY_SIGNATURE = env.bool(
+    "QUIPUCORDS_LIGHTSPEED_JWT_VERIFY_SIGNATURE", default=False
+)
+# Accepted JWT signing algorithms (standard RSA and ECDSA)
+QUIPUCORDS_LIGHTSPEED_JWT_ALGORITHMS = [
+    "RS256", "RS384", "RS512",  # RSA signatures
+    "ES256", "ES384", "ES512",  # ECDSA signatures
+]
+
 QUIPUCORDS_HASHICORP_VAULT_DEFAULT_PORT = env.int(
     "QUIPUCORDS_HASHICORP_VAULT_DEFAULT_PORT", default=8200
 )

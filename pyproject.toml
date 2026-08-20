@@ -41,6 +41,8 @@ dependencies = [
     "django-json-agg>=0.0.1",
     "pyvmomi",
     "hvac>=2.4.0",
+    "cryptography>=44.0.0",  # PQC support for hybrid classical/post-quantum TLS
+    "pyjwt[crypto]>=2.9.0",  # JWT signature verification with cryptography backend
 ]
 
 [dependency-groups]
